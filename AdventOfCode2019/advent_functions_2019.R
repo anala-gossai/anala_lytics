@@ -99,7 +99,135 @@ day_1_2_data <-
 sum(unlist(purrr::map(day_1_2_data, moduleFuel4Fuel))) # 5256960
 
 
-# Day 2 ----------------------------------------
+# Day 2.1 ----------------------------------------
+
+intcodeGravAssist <-
+  function(program) {
+    # Summary: Using provided integers, starts by looking at 
+    # the first integer = opcode (1 = sum, 2 = 
+    # multiply, or 99), indicating what to do; for 
+    # example, 99 means that the program is finished 
+    # and should immediately halt. The first two 
+    # integers after the oppcode indicate the 
+    # positions from which you should read the input 
+    # values, and the third after the oppcode 
+    # indicates the position at which the output 
+    # should be stored. Once you're done processing 
+    # an opcode, move to the next one by stepping 
+    # forward 4 positions.
+    
+    # Input:
+    #   program: a list of integers separated by commas 
+    #     (e.g., c(1, 2, 3, 4))
+    
+    # Output: new program  (list of integers) 
+    # after implementing each oppcode. 
+    
+    # Examples:
+    # intcodeGravAssist( c(1,9,10,3,2,3,11,0,99,30,40,50) ) # 3500, 9, 10, 70, 2, 3, 11, 0, 99, 30, 40, 50
+    # intcodeGravAssist( c(1,0,0,0,99) ) # 2, 0, 0, 0, 99
+    # intcodeGravAssist( c(2,3,0,3,99) ) # 2, 3, 0, 6, 99
+    # intcodeGravAssist( c(2,4,4,5,99,0) ) # 2, 4, 4, 5, 99, 9801
+    # intcodeGravAssist( c(1,1,1,4,99,5,6,0,99) ) # 30, 1, 1, 4, 2, 5, 6, 0, 99
+    
+    # Initialise program: 
+    oppcode <- program[1]
+    if( !oppcode %in% c(1, 2, 99) ) {
+      stop('An incorrect oppcode was used -- something went wrong.')
+    }
+    
+    input_positions <- program[2:3] + 1
+    output_position <- program[4] + 1
+    if( any( is.na(program[c(input_positions, output_position)]) ) ) {
+      stop('Initial specified input / output positions do not match program length')
+    }
+    
+    operation <- 
+      ifelse(oppcode == 1, sum, 
+             ifelse(oppcode == 2, prod,
+                    NA))
+    execute_operation <- operation(program[input_positions])
+    
+    new_program <- program
+    
+    while(oppcode != 99) {
+      
+      program[output_position] <- execute_operation
+      
+      new_program <- program[(length(program)-length(new_program) + 1):length(program)]
+      new_program <- new_program[5:length(new_program)]
+      
+      # Initialise new program: 
+      oppcode <- new_program[1]
+      input_positions <- new_program[2:3] + 1
+      output_position <- new_program[4] + 1 
+      operation <- 
+        try(
+          ifelse(oppcode == 1, sum, 
+                 ifelse(oppcode == 2, prod,
+                        NA)
+          ), 
+          TRUE)
+      execute_operation <- try(operation(program[input_positions]), TRUE)
+    }
+    
+    return(program)
+  }
+
+## Test: 
+day_2_data <- 
+  read.csv(
+    "~/anala_lytics/AdventOfCode2019/advent_inputs_2019/day_2", 
+    header = FALSE, 
+    stringsAsFactors = FALSE
+  ) %>% 
+  dplyr::mutate(
+    V2 = 12,
+    V3 = 2
+  ) %>% 
+  unlist() %>% 
+  as.numeric()
+
+intcodeGravAssist(day_2_data)[1] # 12490719
+
+
+# Day 2.2 ----------------------------------------
+
+intcodeNounVerb <- 
+  function(output_number,
+           program) {
+    # Summary: Given a pair of inputs, determine which 
+    # produces the output number of interest after 
+    # replacing them in the program parameters. 
+    
+    # Input:
+    #   output_number: number
+    #   program: a list of integers separated by commas 
+    #     (e.g., c(1, 2, 3, 4))
+    
+    # Output: A string with the inputs needed to result 
+    # in the program output of interest. 
+    for(i in 0:99) {
+      for(j in 0:99) {
+        noun <- i
+        verb <- j
+        
+        mod_program <- program
+        mod_program[2] <- noun
+        mod_program[3] <- verb
+        
+        output <- intcodeGravAssist(mod_program)[1]
+        if(output == 19690720) {
+          return(
+            paste0('The noun is ', noun, ' and the verb is ', verb, '.')
+          )
+        }
+      }
+    }
+  }
+
+## Test:
+intcodeNounVerb(19690720, day_2_data) # "The noun is 20 and the verb is 3." (100 * 20 + 3)
 
 
 # Day 3 ----------------------------------------
