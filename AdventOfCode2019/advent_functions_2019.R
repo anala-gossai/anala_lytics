@@ -352,7 +352,104 @@ wireClosestCross(
 ) # shortest manhatten distance = 357; fewest steps = 101956
 
 
-# Day 4 ----------------------------------------
+# Day 4.1 ----------------------------------------
+
+is.password <-
+  function(potential_password) {
+    # Summary: Given a potential password, identify if
+    # two adjacent digits are the same (like 22 in 122345); and 
+    # when going from left to right, the digits never decrease;
+    
+    # Input:
+    #   potential_password: charater of 6 digit numeric password
+    
+    # Output: boolean (T/F) for if the potential password meets
+    # all password requirements. 
+    
+    # Examples: 
+    # is.password('122345') # T
+    # is.password('111123') # T
+    # is.password('135679') # F
+    # is.password('111111') # T
+    # is.password('223450') # F
+    # is.password('123789') # F
+    potential_password_str <- as.numeric(unlist(strsplit(potential_password, '')))
+    
+    if(length(potential_password_str) != 6) {
+      stop("The password must be 6 digists long")
+    }
+    
+    difference <- NULL
+    repeated   <- NULL
+    
+    for( i in 1:(length(potential_password_str)-1) ) {
+      difference[i] <- potential_password_str[[i+1]] - potential_password_str[[i]]
+      repeated[i] <- potential_password_str[[i+1]] == potential_password_str[[i]]
+    }
+    
+    any(repeated) & all(difference >= 0)
+  }
+
+## Test: 
+sum(unlist(lapply(as.character(234208:765869), is.password))) # 1246  
+
+
+# Day 4.2 ----------------------------------------
+
+longRep <- 
+  function(stringz){
+    # Summary: Implement a method to identify if two adjacent 
+    # matching characters are not part of a larger group of 
+    # matching characters. 
+    
+    # Input: 
+    #   stringz: a string of characters 
+    
+    # Output: boolean (T/F) for if the string has repeated 
+    # characters. 
+    
+    # Examples:
+    # longRep('112233') # T
+    # longRep('123444') # F
+    # longRep('111122') # T
+    stringz_split <- unlist(strsplit(as.character(stringz), ""))
+    
+    stringz_num <- NULL
+    for(i in 1:length(stringz_split)) {
+      
+      if(i > 1) {
+        if(!exists('counter')) {
+          counter <- 1
+        }
+        
+        if(stringz_split[i] != stringz_split[i-1]) {
+          counter <- 1
+          stringz_num[i] <- counter
+          
+        } else {
+          counter <- counter + 1
+          stringz_num[i] <- counter
+        }
+        
+      } else {
+        stringz_num[i] <- 1
+      }
+      
+    }
+    
+    stringz_num_chr <- paste(stringz_num, collapse = "")
+    
+    (grepl('2', stringz_num_chr) & !grepl('23', stringz_num_chr)) |
+      (grepl('23', stringz_num_chr) & (grepl('121', stringz_num_chr) | endsWith(stringz_num_chr, '2')))
+  }
+
+## Test: 
+multi_password <- 
+  function(x) {
+    is.password(x) & longRep(x)
+  }
+
+sum(unlist(lapply(as.character(234208:765869), multi_password))) # 814
 
 
 # Day 5 ----------------------------------------
