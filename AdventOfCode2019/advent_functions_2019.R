@@ -282,8 +282,8 @@ expandWirePath <-
 wireClosestCross <- 
   function(wire_1_path,
            wire_2_path) {
-    # Summary:  Given two wires connected to a central 
-    # port (0, 0), provide the Manhattan distance from 
+    # Summary: Given two wires connected to a central 
+    # port (0, 0), provides the Manhattan distance from 
     # the central port to the closest intersection between 
     # the two wires, as well as the shortest steps to an 
     # intersection.
@@ -292,7 +292,7 @@ wireClosestCross <-
     #   wire_1_path: first wire path in the form of [RUDL][0:9]
     #   wire_2_path: second wire path in the form of [RUDL][0:9]
     
-    # Output: numeric shortest distance to closest intersection
+    # Output: numeric shortest distance to closest intersection,
     # and numeric fewest steps to an intersection. 
     
     # Examples:
