@@ -452,7 +452,101 @@ multi_password <-
 sum(unlist(lapply(as.character(234208:765869), multi_password))) # 814
 
 
-# Day 5 ----------------------------------------
+# Day 5.1 ----------------------------------------
+
+intcodeDiagnosis <- 
+  function(program,
+           input = 1) {
+    # Summary: Given a diagnostic program, provide 
+    # all successful diagnostic tests until a failing
+    # diagnostic test code. 
+    
+    # Input:
+    #   program: a list of integers separated by commas 
+    #     (e.g., c(1, 2, 3, 4))
+    # Input: a number to input
+    
+    # Output: A list of output codes with last number in the
+    # list being the diagnostic code. 
+    output <- list()
+    
+    i <- 1
+    
+    while(i > 0 & i < length(program)) {
+      
+      opp_param <- 
+        paste(
+          c( rep(0, 5-nchar(program[i])), 
+             as.character(program[i]) ),
+          collapse = ''
+        )
+      
+      oppcode <- as.numeric( substr(opp_param, 4, 5) )
+      
+      param_1 <- program[1+i] + 1
+      param_2 <- program[2+i] + 1
+      param_3 <- program[3+i] + 1
+      
+      param_mode_1 <- as.numeric( substr(opp_param, 3, 3) )
+      param_mode_2 <- as.numeric( substr(opp_param, 2, 2) )
+      param_mode_3 <- as.numeric( substr(opp_param, 1, 1) )
+      param_mode_applied_1 <- ifelse(param_mode_1 == 0, program[param_1], 
+                                     ifelse(param_mode_1 == 1, param_1-1,
+                                            NA))
+      param_mode_applied_2 <- ifelse(param_mode_2 == 0, program[param_2], 
+                                     ifelse(param_mode_2 == 1, param_2-1,
+                                            NA))
+      
+      if ( !param_mode_3 %in% c(0, 1) ) {
+        stop('Parameter 3 is incorrect.')
+      }
+      
+      if ( oppcode == 1 ) {
+        operation = sum
+        execute_operation = operation(param_mode_applied_1, param_mode_applied_2)
+        program[param_3] = execute_operation
+        i = i+4
+        
+      } else if ( oppcode == 2 ) {
+        operation = prod
+        execute_operation = operation(param_mode_applied_1, param_mode_applied_2)
+        program[param_3] = execute_operation
+        i = i+4
+        
+      } else if ( oppcode == 3 ) {
+        program[program[i+1] + 1] = input 
+        i = i+2
+        
+      } else if ( oppcode == 4 ) {
+        if (param_mode_1 == 0) {
+          output[i] = program[program[i+1] + 1]
+        } else if (param_mode_1 == 1) {
+          output[i] = param_mode_applied_1
+        }
+        
+        i = i+2
+        
+      } else if ( oppcode == 99 ) {
+        return(output)
+      }
+    }
+  }
+
+## Test:
+day_5_data <- 
+  read.csv(
+    "~/anala_lytics/AdventOfCode2019/advent_inputs_2019/day_5", 
+    header = FALSE, 
+    stringsAsFactors = FALSE
+  ) %>% 
+  unlist() %>% 
+  as.numeric()
+
+output_list <- intcodeDiagnosis(day_5_data)
+output_list[[length(output_list)]] # 13547311
+
+
+# Day 5.2 ----------------------------------------
 
 
 # Day 6 ----------------------------------------
