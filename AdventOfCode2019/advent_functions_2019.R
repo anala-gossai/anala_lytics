@@ -32,16 +32,16 @@ moduleFuel <-
   }
 
 ## Test: 
-day_1_1_data <- 
+day_1_data <- 
   read.table(
-    "~/anala_lytics/AdventOfCode2019/advent_inputs_2019/day_1_1", 
+    "~/anala_lytics/AdventOfCode2019/advent_inputs_2019/day_1", 
     quote = "\"", 
     comment.char = "", 
     stringsAsFactors = FALSE
   ) %>% 
   unlist()
 
-sum(unlist(purrr::map(day_1_1_data, moduleFuel))) # 3506577
+sum(unlist(purrr::map(day_1_data, moduleFuel))) # 3506577
 
 
 # Day 1.2 ----------------------------------------
@@ -87,16 +87,7 @@ moduleFuel4Fuel <-
   }
 
 ## Test: 
-day_1_2_data <- 
-  read.table(
-    "~/anala_lytics/AdventOfCode2019/advent_inputs_2019/day_1_2", 
-    quote = "\"", 
-    comment.char = "", 
-    stringsAsFactors = FALSE
-  ) %>% 
-  unlist()
-
-sum(unlist(purrr::map(day_1_2_data, moduleFuel4Fuel))) # 5256960
+sum(unlist(purrr::map(day_1_data, moduleFuel4Fuel))) # 5256960
 
 
 # Day 2.1 ----------------------------------------
@@ -490,6 +481,7 @@ intcodeDiagnosis <-
       param_mode_1 <- as.numeric( substr(opp_param, 3, 3) )
       param_mode_2 <- as.numeric( substr(opp_param, 2, 2) )
       param_mode_3 <- as.numeric( substr(opp_param, 1, 1) )
+      
       param_mode_applied_1 <- ifelse(param_mode_1 == 0, program[param_1], 
                                      ifelse(param_mode_1 == 1, param_1-1,
                                             NA))
@@ -500,6 +492,7 @@ intcodeDiagnosis <-
       if ( !param_mode_3 %in% c(0, 1) ) {
         stop('Parameter 3 is incorrect.')
       }
+      
       
       if ( oppcode == 1 ) {
         operation = sum
@@ -518,9 +511,9 @@ intcodeDiagnosis <-
         i = i+2
         
       } else if ( oppcode == 4 ) {
-        if (param_mode_1 == 0) {
+        if ( param_mode_1 == 0 ) {
           output[i] = program[program[i+1] + 1]
-        } else if (param_mode_1 == 1) {
+        } else if ( param_mode_1 == 1 ) {
           output[i] = param_mode_applied_1
         }
         
