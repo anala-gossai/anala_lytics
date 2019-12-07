@@ -640,6 +640,20 @@ day_6_data <-
 numberOrbits(day_6_data) # 194721
 
 
+# Day 6.2 ----------------------------------------
+
+orbitTransfers <-
+  function(orbit_map) {
+    # Summary: 
+    
+    # Input: 
+    
+    # Output: 
+    
+    # Example: 
+  }
+
+
 # Day 7 ----------------------------------------
 
 
