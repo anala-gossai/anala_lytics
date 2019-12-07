@@ -519,6 +519,38 @@ intcodeDiagnosis <-
         
         i = i+2
         
+      } else if ( oppcode == 5 ) {
+        if ( param_mode_applied_1 != 0 ) {
+          i = param_mode_applied_2 + 1
+        } else {
+          i = i+3
+        }
+        
+      } else if ( oppcode == 6 ) {
+        if ( param_mode_applied_1 == 0 ) {
+          i = param_mode_applied_2 + 1
+        } else {
+          i = i+3
+        }
+        
+      } else if ( oppcode == 7 ) {
+        if ( param_mode_applied_1 < param_mode_applied_2 ) {
+          program[param_3] = 1
+          i = i+4
+        } else {
+          program[param_3] = 0
+          i = i+4
+        }
+        
+      } else if ( oppcode == 8 ) {
+        if ( param_mode_applied_1 == param_mode_applied_2 ) {
+          program[param_3] = 1
+          i = i+4
+        } else {
+          program[param_3] = 0
+          i = i+4
+        }
+        
       } else if ( oppcode == 99 ) {
         return(output)
       }
@@ -540,6 +572,10 @@ output_list[[length(output_list)]] # 13547311
 
 
 # Day 5.2 ----------------------------------------
+
+## Test:
+output_list <- intcodeDiagnosis(day_5_data, input = 5)
+output_list[[length(output_list)]] # 236453
 
 
 # Day 6 ----------------------------------------
