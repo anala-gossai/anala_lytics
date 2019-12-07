@@ -644,14 +644,47 @@ numberOrbits(day_6_data) # 194721
 
 orbitTransfers <-
   function(orbit_map) {
-    # Summary: 
+    # Summary: figure out how many orbital transfers 
+    # you (YOU) need to take to get to Santa (SAN)
     
     # Input: 
+    #   orbit_map: orbit map in the form 
+    #     of a planet A orbitting ) some
+    #     sun B. 
     
-    # Output: 
+    # Output: Return the minimum number of orbital 
+    # transfers required to move from the object YOU 
+    # are orbiting to the object SAN is orbiting? 
+    # (Between the objects they are orbiting - not between YOU and SAN.)
     
     # Example: 
+    # orbit_map <- c("COM)B","B)C","C)D","D)E","E)F","B)G","G)H","D)I","E)J","J)K","K)L","K)YOU","I)SAN")
+    # orbitTransfers(orbit_map) # 4
+    last_planet      <- c('SAN', 'YOU')
+    planets_orbits   <- NULL
+    
+    for ( i in 1:length(last_planet) ) {
+      last_planet_orbit <- orbit_map[grepl(paste0(')', last_planet[i]), orbit_map)]
+      planets_orbits[i] <- last_planet_orbit
+      
+      while( !grepl("COM", planets_orbits[i]) ) {
+        last_planet_sun <- gsub(").*", "", last_planet_orbit)
+        next_planet_orbit <- orbit_map[grepl(paste0(')', last_planet_sun), orbit_map)]
+        planets_orbits[i] <- paste(next_planet_orbit, planets_orbits[i], sep = ", ")
+        last_planet_orbit <- next_planet_orbit
+      }
+    }
+    
+    planets_orbits_san <- unlist(strsplit(planets_orbits[1], ", "))
+    planets_orbits_you <- unlist(strsplit(planets_orbits[2], ", "))
+    
+    length(planets_orbits_san[!planets_orbits_san %in% planets_orbits_you]) + 
+      length(planets_orbits_you[!planets_orbits_you %in% planets_orbits_san]) - 
+      2
   }
+
+## Test: 
+orbitTransfers(day_6_data) # 316
 
 
 # Day 7 ----------------------------------------
