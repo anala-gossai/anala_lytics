@@ -578,7 +578,66 @@ output_list <- intcodeDiagnosis(day_5_data, input = 5)
 output_list[[length(output_list)]] # 236453
 
 
-# Day 6 ----------------------------------------
+# Day 6.1 ----------------------------------------
+
+numberOrbits <-
+  function(orbit_map) {
+    # Summary: Count the number of direct and indirect
+    # orbits given an orbit map. 
+    
+    # Input: 
+    #   orbit_map: orbit map in the form 
+    #     of a planet A orbitting ) some
+    #     sun B. 
+    
+    # Output: The number of direct and indirect orbits. 
+    
+    # Example: 
+    # orbits_map_test <- c("COM)B", "B)C", "C)D", "D)E", "E)F", "B)G", "G)H", "D)I", "E)J", "J)K", "K)L")
+    # numberOrbits(orbits_map_test) # 42
+    orbit_map_planet <- gsub(".*)", "", orbit_map)
+    orbit_map_sun    <- gsub(").*", "", orbit_map)
+    last_planet      <- orbit_map_planet[!orbit_map_planet %in% orbit_map_sun]
+    planets_orbits <- NULL
+    
+    for ( i in 1:length(last_planet) ) {
+      last_planet_orbit <- orbit_map[grepl(paste0(')', last_planet[i]), orbit_map)]
+      planets_orbits[i] <- last_planet_orbit
+      
+      while( !grepl("COM", planets_orbits[i]) ) {
+        last_planet_sun <- gsub(").*", "", last_planet_orbit)
+        next_planet_orbit <- orbit_map[grepl(paste0(')', last_planet_sun), orbit_map)]
+        planets_orbits[i] <- paste(next_planet_orbit, planets_orbits[i], sep = ", ")
+        last_planet_orbit <- next_planet_orbit
+      }
+      
+    }
+    
+    deconstruct <- list()
+    
+    for ( i in 1:length(planets_orbits) ) {
+      planets_orbits_split <- unlist(strsplit(planets_orbits[i], ', '))
+      for (j in 1:length(planets_orbits_split) ) {
+        deconstruct[length(deconstruct)+1] <- (paste(planets_orbits_split[1:(length(planets_orbits_split) - j)], collapse = ", "))
+      }
+    }
+    
+    length(unlist(strsplit(sort(unique( c(unlist(deconstruct), planets_orbits) )), ", ")))
+  }
+
+## Test:
+day_6_data <- 
+  read.table(
+    "~/anala_lytics/AdventOfCode2019/advent_inputs_2019/day_6", 
+    quote = "\"", 
+    comment.char = "", 
+    stringsAsFactors = FALSE
+  ) %>% 
+  rename(orbits = V1) %>% 
+  unlist() %>% 
+  as.character()
+
+numberOrbits(day_6_data) # 194721
 
 
 # Day 7 ----------------------------------------
