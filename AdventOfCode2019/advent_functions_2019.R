@@ -897,7 +897,52 @@ intcodeDiagnosisMultThruster(day_7_data, all_permut) # max thruster = 206580; pe
 
 #  ¯\_(ツ)_/¯  
 
-# Day 8 ----------------------------------------
+# Day 8.1 ----------------------------------------
+
+makeImageLayers <- 
+  function(pixels,
+           width,
+           height) {
+    # Summary: Given an image (i.e., a series of digits 
+    # that each represent the color of a single pixel), 
+    # find each identically-sized layer and specific layer 
+    # of interest. 
+    
+    # Input: 
+    #   pixels: series of digits 
+    #   width: how wide image is
+    #   height: how tall image is 
+    
+    # Ouput: Find the layer that contains the fewest 0 digits. 
+    # On that layer, what is the number of 1 digits multiplied 
+    # by the number of 2 digits. 
+    
+    # Example:
+    # pixels_test <- '123456789012'
+    # width_test <- 3; height_test <- 2
+    # makeImageLayers(pixels_test, width_test, height_test) # 1
+    pixels_list <- as.numeric(unlist( strsplit(pixels, '') )) 
+    pixels_split <- split(pixels_list, ceiling(seq_along(pixels_list)/(width*height)))
+    
+    number_zeros <- function(lst) { sum(lst == 0) }
+    pixels_min_number_zeros <- as.numeric( which.min( lapply(pixels_split, number_zeros) ) )
+    
+    pixels_split_min_num_zeros <- pixels_split[[pixels_min_number_zeros]]
+    sum(pixels_split_min_num_zeros == 1) * sum(pixels_split_min_num_zeros == 2)
+  }
+
+## Test: 
+fileName <- '~/anala_lytics/AdventOfCode2019/advent_inputs_2019/day_8'
+day_8_data <- readChar(fileName, file.info(fileName)$size)
+
+makeImageLayers(
+  day_8_data,
+  25,
+  6
+) # 2480
+
+
+# Day 8.2 ----------------------------------------
 
 
 # Day 9 ----------------------------------------
