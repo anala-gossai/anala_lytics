@@ -2,6 +2,7 @@
 # https://adventofcode.com/2019
 
 library(dplyr)
+library(gtools)
 library(purrr)
 
 # Day 1.1 ----------------------------------------
@@ -687,10 +688,214 @@ orbitTransfers <-
 orbitTransfers(day_6_data) # 316
 
 
-# Day 7 ----------------------------------------
+# Day 7.1 ----------------------------------------
+
+intcodeDiagnosisMult <- 
+  function(program,
+           inputs) {
+    # Summary: Given a diagnostic program, provide 
+    # all successful diagnostic tests until a failing
+    # diagnostic test code. 
+    
+    # Input:
+    #   program: a list of integers separated by commas 
+    #     (e.g., c(1, 2, 3, 4))
+    # Inputs: numbers to input
+    
+    # Output: A list of output codes with last number in the
+    # list being the diagnostic code. 
+    output <- list()
+    
+    i <- 1
+    oppcode3_count <- 0
+    
+    while(i > 0 & i < length(program)) {
+      
+      opp_param <- 
+        paste(
+          c( rep(0, 5-nchar(program[i])), 
+             as.character(program[i]) ),
+          collapse = ''
+        )
+      
+      oppcode <- as.numeric( substr(opp_param, 4, 5) )
+      param_1 <- program[1+i] + 1
+      param_2 <- program[2+i] + 1
+      param_3 <- program[3+i] + 1
+      
+      param_mode_1 <- as.numeric( substr(opp_param, 3, 3) )
+      param_mode_2 <- as.numeric( substr(opp_param, 2, 2) )
+      param_mode_3 <- as.numeric( substr(opp_param, 1, 1) )
+      
+      param_mode_applied_1 <- ifelse(param_mode_1 == 0, program[param_1], 
+                                     ifelse(param_mode_1 == 1, param_1-1,
+                                            NA))
+      param_mode_applied_2 <- ifelse(param_mode_2 == 0, program[param_2], 
+                                     ifelse(param_mode_2 == 1, param_2-1,
+                                            NA))
+      
+      if ( !param_mode_3 %in% c(0, 1) ) {
+        stop('Parameter 3 is incorrect.')
+      }
+      
+      
+      if ( oppcode == 1 ) {
+        operation = sum
+        execute_operation = operation(param_mode_applied_1, param_mode_applied_2)
+        program[param_3] = execute_operation
+        i = i+4
+        
+      } else if ( oppcode == 2 ) {
+        operation = prod
+        execute_operation = operation(param_mode_applied_1, param_mode_applied_2)
+        program[param_3] = execute_operation
+        i = i+4
+        
+      } else if ( oppcode == 3 ) {
+        program[program[i+1] + 1] = inputs[oppcode3_count + 1] 
+        oppcode3_count = oppcode3_count + 1
+        i = i+2
+        
+      } else if ( oppcode == 4 ) {
+        if ( param_mode_1 == 0 ) {
+          output[i] = program[program[i+1] + 1]
+        } else if ( param_mode_1 == 1 ) {
+          output[i] = param_mode_applied_1
+        }
+        
+        i = i+2
+        
+      } else if ( oppcode == 5 ) {
+        if ( param_mode_applied_1 != 0 ) {
+          i = param_mode_applied_2 + 1
+        } else {
+          i = i+3
+        }
+        
+      } else if ( oppcode == 6 ) {
+        if ( param_mode_applied_1 == 0 ) {
+          i = param_mode_applied_2 + 1
+        } else {
+          i = i+3
+        }
+        
+      } else if ( oppcode == 7 ) {
+        if ( param_mode_applied_1 < param_mode_applied_2 ) {
+          program[param_3] = 1
+          i = i+4
+        } else {
+          program[param_3] = 0
+          i = i+4
+        }
+        
+      } else if ( oppcode == 8 ) {
+        if ( param_mode_applied_1 == param_mode_applied_2 ) {
+          program[param_3] = 1
+          i = i+4
+        } else {
+          program[param_3] = 0
+          i = i+4
+        }
+        
+      } else if ( oppcode == 99 ) {
+        return(unlist( output[length(output)]) )
+      }
+    }
+  }
+
+
+intcodeDiagnosisMultThruster <- 
+  function(program,
+           permutations) {
+    # Summary: Given a diagnostic program, provide 
+    # the max thruster value and the permutation of inputs
+    # that gave that max thruster value. 
+    
+    # Input:
+    #   program: a list of integers separated by commas 
+    #     (e.g., c(1, 2, 3, 4))
+    # permutations: numbers of inputs to try to input
+    
+    # Output: A list of max thruster value and 
+    # input mpermutations that gave max value.
+    
+    # Example:
+    # intcodeDiagnosisMultThruster(
+    #   program = c(3,15,3,16,1002,16,10,16,1,16,15,15,4,15,99,0,0),
+    #   permutations = gtools::permutations(5, 5, 0:4) %>% as.data.frame()
+    # ) # max thruster = 43210; inputs = 43210
+    # 
+    # 
+    # intcodeDiagnosisMultThruster(
+    #   program = c(3,23,3,24,1002,24,10,24,1002,23,-1,23,
+    #               101,5,23,23,1,24,23,23,4,23,99,0,0),
+    #   permutations = gtools::permutations(5, 5, 0:4) %>% as.data.frame()
+    # ) # max thruster = 54321; inputs = 01234
+    # 
+    # intcodeDiagnosisMultThruster(
+    #   program = c(3,31,3,32,1002,32,10,32,1001,31,-2,31,1007,31,0,33,
+    #               1002,33,7,33,1,33,31,31,1,32,31,31,4,31,99,0,0,0),
+    #   permutations = gtools::permutations(5, 5, 0:4) %>% as.data.frame()
+    # ) # max thruster = 65210; inputs = 10432
+    permute_outputs <- c()
+    for ( i in 1:nrow(permutations) ) {
+      phases <- unlist(permutations[i,])
+      
+      A <- intcodeDiagnosisMult(
+        program = program,
+        inputs = c(phases[1], 0)
+      )
+      
+      B <- intcodeDiagnosisMult(
+        program = program,
+        inputs = c(phases[2], A)
+      )
+      
+      C <- intcodeDiagnosisMult(
+        program = program,
+        inputs = c(phases[3], B)
+      )
+      
+      D <- intcodeDiagnosisMult(
+        program = program,
+        inputs = c(phases[4], C)
+      )
+      
+      E <- intcodeDiagnosisMult(
+        program = program,
+        inputs = c(phases[5], D)
+      )
+      
+      permute_outputs <- c(permute_outputs, E)
+      
+    }
+    
+    return(
+      c(
+        max_thruster = max(permute_outputs),
+        max_permutation = paste(as.vector(unlist( permutations[which.max(permute_outputs),] )), collapse = '')
+      )
+    )
+  }
+
+## Test:
+day_7_data <- 
+  read.csv(
+    "~/anala_lytics/AdventOfCode2019/advent_inputs_2019/day_7", 
+    header = FALSE, 
+    stringsAsFactors = FALSE
+  ) %>% 
+  unlist() %>% 
+  as.numeric()
+
+all_permut <- gtools::permutations(5, 5, 0:4) %>% as.data.frame()
+
+intcodeDiagnosisMultThruster(day_7_data, all_permut) # max thruster = 206580; permutation = 20143
+
+
+# Day 7.2 ----------------------------------------
 
 #  ¯\_(ツ)_/¯  
-
 
 # Day 8 ----------------------------------------
 
@@ -760,18 +965,15 @@ orbitTransfers(day_6_data) # 316
 # [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
 # 
 # attached base packages:
-# [1] stats     graphics  grDevices
-# [4] utils     datasets  methods  
-# [7] base     
+# [1] stats     graphics  grDevices utils     datasets 
+# [6] methods   base     
 # 
 # other attached packages:
-# [1] purrr_0.2.3   dplyr_0.8.0.1
+# [1] purrr_0.2.3   dplyr_0.8.0.1 gtools_3.8.1 
 # 
 # loaded via a namespace (and not attached):
-#  [1] tidyselect_0.2.5 compiler_3.4.1  
-#  [3] magrittr_1.5     assertthat_0.2.0
-#  [5] R6_2.4.0         tools_3.4.1     
-#  [7] pillar_1.3.1     glue_1.3.1      
-#  [9] rstudioapi_0.9.0 tibble_2.0.1    
-# [11] crayon_1.3.4     Rcpp_1.0.0      
-# [13] pkgconfig_2.0.2  rlang_0.3.1  
+#  [1] tidyselect_0.2.5 compiler_3.4.1   magrittr_1.5    
+#  [4] assertthat_0.2.0 R6_2.4.0         tools_3.4.1     
+#  [7] pillar_1.3.1     glue_1.3.1       rstudioapi_0.9.0
+# [10] tibble_2.0.1     crayon_1.3.4     Rcpp_1.0.0      
+# [13] pkgconfig_2.0.2  rlang_0.3.1 
