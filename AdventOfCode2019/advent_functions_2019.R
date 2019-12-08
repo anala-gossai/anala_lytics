@@ -944,6 +944,48 @@ makeImageLayers(
 
 # Day 8.2 ----------------------------------------
 
+getFinalImage <- 
+  function(
+    pixels,
+    width,
+    height
+  ) {
+    # Summary: Display image given pixels
+    # and which pixel is colored. 
+    
+    # Input: 
+    #   pixels: series of digits 
+    #   width: how wide image is
+    #   height: how tall image is 
+    
+    # Ouput: Decoded message. 
+    
+    # Example:
+    # getFinalImage('0222112222120000', 2, 2)
+    pixels_list <- as.numeric(unlist( strsplit(pixels, '') )) 
+    pixels_split <- split(pixels_list, ceiling(seq_along(pixels_list)/(width*height)))
+    
+    get_nth <- function(l,i) {l[i]}
+    position_opts <- NULL
+    for (i in 1:(width*height)) {
+      position_opts[[i]] <- as.numeric(unlist( lapply(pixels_split, get_nth, i) ))
+    }
+    
+    final_positions <- NULL
+    for (i in 1:length(position_opts)) {
+      potential_position   <- position_opts[[i]][min(which(position_opts[[i]] != 2))]
+      final_positions[[i]] <- ifelse(is.finite(potential_position), potential_position, 2)
+    }
+    
+    final_image <- ifelse(final_positions == 1,  "*", " ")
+    final_image_split <- split(final_image, ceiling(seq_along(final_image)/(width)))
+    final_image_split <- lapply(final_image_split, paste, collapse = '')
+    as.data.frame(matrix(rbind(final_image_split)))
+  }
+
+## Test: 
+getFinalImage(day_8_data, 25, 6) # ZYBLH
+
 
 # Day 9 ----------------------------------------
 
