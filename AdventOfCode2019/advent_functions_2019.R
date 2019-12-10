@@ -987,8 +987,187 @@ getFinalImage <-
 getFinalImage(day_8_data, 25, 6) # ZYBLH
 
 
-# Day 9 ----------------------------------------
+# Day 9.1 ----------------------------------------
 
+intcodeBoost <- 
+  function(program,
+           inputs) {
+    # Summary: Given a diagnostic program, provide 
+    # all successful diagnostic tests until a failing
+    # diagnostic test code. 
+    
+    # Input:
+    #   program: a list of integers separated by commas 
+    #     (e.g., c(1, 2, 3, 4))
+    # Inputs: numbers to input
+    
+    # Output: A / multiple output code(s). 
+    
+    # Examples:
+    # intcodeBoost(c(109,1,204,-1,1001,100,1,100,1008,100,16,101,1006,101,0,99)) # returns program
+    # intcodeBoost(c(1102,34915192,34915192,7,4,7,99,0)) # 1219070632396864
+    # intcodeBoost(c(104,1125899906842624,99)) # 1125899906842624
+    # intcodeBoost(c(109, 1, 203, -1, 4, 0, 99), 42) # 42
+    output <- c()
+    
+    i <- 1
+    oppcode3_count <- 0
+    relative_base <- 0
+    
+    while(TRUE) {
+      # print(paste(program, collapse = ", "))
+      opp_param <- 
+        paste(
+          c( rep(0, 5-nchar(program[i])), 
+             as.character(program[i]) ),
+          collapse = ''
+        )
+      
+      oppcode <- as.numeric( substr(opp_param, 4, 5) )
+      param_1 <- program[1+i] + 1
+      param_2 <- program[2+i] + 1
+      param_3 <- program[3+i] + 1
+      
+      param_mode_1 <- as.numeric( substr(opp_param, 3, 3) )
+      param_mode_2 <- as.numeric( substr(opp_param, 2, 2) )
+      param_mode_3 <- as.numeric( substr(opp_param, 1, 1) )
+      
+      param_mode_applied_1 <- ifelse(param_mode_1 == 0, program[param_1], 
+                                     ifelse(param_mode_1 == 1, param_1-1,
+                                            ifelse(param_mode_1 == 2, program[relative_base + param_1],
+                                                   NA)))
+      param_mode_applied_2 <- ifelse(param_mode_2 == 0, program[param_2], 
+                                     ifelse(param_mode_2 == 1, param_2-1,
+                                            ifelse(param_mode_2 == 2, program[relative_base + param_2],
+                                                   NA)))
+      
+      if ( is.na(param_mode_applied_1) & param_mode_1 == 2 ) {
+        program = c( program, rep(0, relative_base + param_1 - length(program)) )
+        param_mode_applied_1 = program[param_1 + relative_base] 
+      } 
+      
+      if ( is.na(param_mode_applied_2) & param_mode_1 == 2 ) {
+        program = c( program, rep(0, relative_base + param_2 - length(program)) )
+        param_mode_applied_2 = program[relative_base + param_2]
+      } 
+      
+      if ( !param_mode_3 %in% c(0, 1, 2) ) {
+        stop('Parameter 3 is incorrect.')
+      }
+      
+      if ( !oppcode %in% c(1:9, 99) ) {
+        stop(paste0('Oppcode ', opp_param,' is incorrect:', paste(program, collapse = ", ")))
+      }
+      
+      if ( oppcode == 1 ) {
+        operation = sum
+        if((program[i+3] + 1 + relative_base) <= 0) {stop(paste0(opp_param))}
+        execute_operation = operation(param_mode_applied_1, param_mode_applied_2)
+        if ( param_mode_1 == 2 ) {
+          program[program[i+3] + 1 + relative_base] = execute_operation
+        } else {
+          program[param_3] = execute_operation
+        }
+        i = i+4
+        
+      } else if ( oppcode == 2 ) {
+        operation = prod
+        if((program[i+3] + 1 + relative_base) <= 0) {stop(paste0(opp_param))}
+        execute_operation = operation(param_mode_applied_1, param_mode_applied_2)
+        if ( param_mode_1 == 2 ) {
+          program[program[i+3] + 1 + relative_base] = execute_operation
+        } else {
+          program[param_3] = execute_operation
+        }
+        i = i+4
+        
+      } else if ( oppcode == 3 ) {
+        if((program[i+1] + 1 + relative_base) <= 0) {stop(paste0(opp_param))}
+        if ( param_mode_1 == 2 ) {
+          program[program[i+1] + 1 + relative_base] = inputs[oppcode3_count + 1] 
+        } else {
+          program[program[i+1] + 1] = inputs[oppcode3_count + 1] 
+        }
+        oppcode3_count = oppcode3_count + 1
+        i = i+2
+        
+      } else if ( oppcode == 4 ) {
+        if ( param_mode_1 == 0 ) {
+          output = c(output, param_mode_applied_1)
+        } else if ( param_mode_1 == 1 ) {
+          output = c(output, param_mode_applied_1)
+        } else if ( param_mode_1 == 2 ) {
+          output = c(output, param_mode_applied_1)
+        }
+        
+        i = i+2
+        
+      } else if ( oppcode == 5 ) {
+        if ( param_mode_applied_1 != 0 ) {
+          i = param_mode_applied_2 + 1
+        } else {
+          i = i+3
+        }
+        
+      } else if ( oppcode == 6 ) {
+        if ( param_mode_applied_1 == 0 ) {
+          i = param_mode_applied_2 + 1
+        } else {
+          i = i+3
+        }
+        
+      } else if ( oppcode == 7 ) {
+        value = as.numeric(param_mode_applied_1 < param_mode_applied_2)
+        if((program[i+3] + 1 + relative_base) <= 0) {stop(paste0(opp_param))}
+        if ( param_mode_1 == 2 ) {
+          program[program[i+3] + 1 + relative_base] = value
+        } else {
+          program[param_3] = value
+        }
+        
+        i = i+4
+        
+      } else if ( oppcode == 8 ) {
+        value = as.numeric(param_mode_applied_1 == param_mode_applied_2)
+        if((program[i+3] + 1 + relative_base) <= 0) {stop(paste0(opp_param))}
+        if ( param_mode_1 == 2 ) {
+          program[program[i+3] + 1 + relative_base] = value
+        } else {
+          program[param_3] = value
+        }
+        
+        i = i+4
+        
+      } else if ( oppcode == 9 ) {
+        relative_base = relative_base + param_mode_applied_1
+        i = i+2
+        
+      } else if ( oppcode == 99 ) {
+        return(as.character(output))
+      }
+      
+      program = ifelse(is.na(program), 0, program)
+    }
+    
+    return(as.character(output))
+  }
+
+## Test:
+day_9_data <- 
+  read.csv(
+    "~/anala_lytics/AdventOfCode2019/advent_inputs_2019/day_9", 
+    header = FALSE, 
+    stringsAsFactors = FALSE
+  ) %>% 
+  unlist() %>% 
+  as.numeric()
+
+intcodeBoost(day_9_data, 1) # ERROR
+
+
+# Day 9.2 ---------------------------------------
+
+# (╯°□°)╯︵ ┻━┻
 
 # Day 10 ---------------------------------------
 
