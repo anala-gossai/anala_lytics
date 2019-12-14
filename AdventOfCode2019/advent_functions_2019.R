@@ -3,6 +3,8 @@
 
 library(dplyr)
 library(gtools)
+library(magrittr)
+library(MASS)
 library(purrr)
 
 # Day 1.1 ----------------------------------------
@@ -1169,17 +1171,403 @@ intcodeBoost(day_9_data, 1) # ERROR
 
 # (╯°□°)╯︵ ┻━┻
 
-# Day 10 ---------------------------------------
+# Day 10.1 ---------------------------------------
+
+identifyAsteroids <-
+  function(map) {
+    # Summary: Find the best asteroid from which to 
+    # track all of the other asteroids. The best location 
+    # is the asteroid that can detect the largest 
+    # number of other asteroids.
+    
+    # Input:
+    #   map: a map indicating all asteroid positions, 
+    #     where each position is empty (.) or contains an asteroid (#). 
+    
+    # Output: the coordinates of where the asteroid would be the 
+    # best place to build a new monitoring station. A monitoring station 
+    # can detect any asteroid to which it has direct line of sight - that 
+    # is, there cannot be another asteroid exactly between them.
+    
+    # Examples: (download test data)
+    # day_10_test1_data <- 
+    #   read.csv2(
+    #     "~/Downloads/day_10_test1",
+    #     header=FALSE, 
+    #     sep="", 
+    #     stringsAsFactors=FALSE
+    #   )
+    # identifyAsteroids(day_10_test1_data)
+    # # asteroid_location asteroids_in_sight_line 
+    # # "(3,4)"                     "8" 
+    # 
+    # day_10_test2_data <- 
+    #   read.csv2(
+    #     "~/Downloads/day_10_test2",
+    #     header=FALSE, 
+    #     sep="", 
+    #     stringsAsFactors=FALSE
+    #   )
+    # identifyAsteroids(day_10_test2_data)
+    # # asteroid_location asteroids_in_sight_line 
+    # # "(5,8)"                    "33"
+    # 
+    # day_10_test3_data <- 
+    #   read.csv2(
+    #     "~/Downloads/day_10_test3",
+    #     header=FALSE, 
+    #     sep="", 
+    #     stringsAsFactors=FALSE
+    #   )
+    # identifyAsteroids(day_10_test3_data)
+    # # asteroid_location asteroids_in_sight_line 
+    # # "(11,13)"                   "210"
+    require(MASS)
+    
+    x_axis_l     <- nchar(map[1,1])
+    y_axis_l     <- nrow(map)
+    asteroid_loc <- c()
+    
+    for(i in 1:y_axis_l) {
+      for(j in 1:x_axis_l) {
+        if(substr(map[i, 1], j, j) == '#') {
+          asteroid_loc <- c(asteroid_loc, paste0("(", j-1, ",", i-1, ")"))
+        }
+      }
+    }
+    
+    m <- list(c())
+    asteroid_xs  = as.numeric(gsub('\\(', '', gsub(',.*', '', asteroid_loc)))
+    asteroid_ys  = as.numeric(gsub('\\)', '', gsub('.*,', '', asteroid_loc)))
+    
+    for(i in 1:length(asteroid_loc)) {
+      asteroid_x = as.numeric(gsub('\\(', '', gsub(',.*', '', asteroid_loc[i])))
+      asteroid_y = as.numeric(gsub('\\)', '', gsub('.*,', '', asteroid_loc[i])))
+      fractions  = MASS::fractions(c( (asteroid_xs - asteroid_x) / (asteroid_ys - asteroid_y)) )
+      
+      quadrant <- c()
+      for(j in 1:length(fractions)) {
+        if( asteroid_xs[j] >= asteroid_x &
+            asteroid_ys[j] < asteroid_y ) {
+          quadrant[j] <- "+-"
+        } else 
+          if( asteroid_xs[j] >= asteroid_x &
+              asteroid_ys[j] >= asteroid_y ) {
+            quadrant[j] <- "++"
+          } else 
+            if ( asteroid_xs[j] < asteroid_x &
+                 asteroid_ys[j] < asteroid_y ) {
+              quadrant[j] <- "--"
+            } else 
+              if ( asteroid_xs[j] < asteroid_x &
+                   asteroid_ys[j] >= asteroid_y ) {
+                quadrant[j] <- "-+"
+              } else {
+                quadrant[j] <- ""
+              }
+      }
+      
+      frac_quad <- paste0(quadrant, as.character(fractions))
+      m[asteroid_loc[i]] <- length(unique( frac_quad ))-1
+    }
+    
+    return(c(asteroid_location       = asteroid_loc[which.max(unlist(m))],
+             asteroids_in_sight_line = max(unlist(m))))
+  }
+
+## Test: 
+day_10_data <- 
+  read.csv2(
+    "~/anala_lytics/AdventOfCode2019/advent_inputs_2019/day_10",
+    header=FALSE, 
+    sep="", 
+    stringsAsFactors=FALSE
+  ) 
+
+identifyAsteroids(day_10_data)
+# asteroid_location asteroids_in_sight_line 
+# "(11,19)"                   "253"
 
 
-# Day 11 ---------------------------------------
+# Day 10.2 ---------------------------------------
+
+vaporiseNthAsteroid <-
+  function(map,
+           n) {
+    # Summary: Find the nth asteroid to be vaporised. 
+    # If multiple asteroids are exactly in line with the 
+    # station, the laser only has enough power to vaporize 
+    # one of them before continuing its rotation.
+    
+    # Inputs:
+    #   map: a map indicating all asteroid positions, 
+    #     where each position is empty (.) or contains an asteroid (#). 
+    #   n: the nth asteroid that was vaporised of interest 
+    
+    # Output: the mapping units for the nth asteroid
+    # to be vaporised. 
+    
+    # Examples: (download test data)
+    # day_10_test4_data <- 
+    #   read.csv2(
+    #     "~/Downloads/day_10_test4",
+    #     header=FALSE, 
+    #     sep="", 
+    #     stringsAsFactors=FALSE
+    #   ) 
+    # vaporiseNthAsteroid(day_10_test4_data, 3) # "(9,1)"
+    # 
+    # day_10_test3_data <-
+    #   read.csv2(
+    #     "~/Downloads/day_10_test3",
+    #     header=FALSE,
+    #     sep="",
+    #     stringsAsFactors=FALSE
+    #   )
+    # vaporiseNthAsteroid(day_10_test3_data, 200) # "(8,2)"
+    require(dplyr)
+    
+    monitoring_station      <- identifyAsteroids(map)
+    monitoring_station_locx <- as.numeric(gsub('\\(', '', gsub(',.*', '', monitoring_station[["asteroid_location"]] )))
+    monitoring_station_locy <- as.numeric(gsub('\\)', '', gsub('.*,', '', monitoring_station[["asteroid_location"]] )))
+    revolution              <- as.numeric(monitoring_station[["asteroids_in_sight_line"]])
+    
+    asteroid_loc <- c()
+    for(i in 1:nrow(map)) {
+      for(j in 1:nchar(map[1,1])) {
+        if(substr(map[i, 1], j, j) == '#') {
+          asteroid_loc <- c(asteroid_loc, paste0("(", j-1, ",", i-1, ")"))
+        }
+      }
+    }
+    asteroid_xs <- as.numeric(gsub('\\(', '', gsub(',.*', '', asteroid_loc))) - monitoring_station_locx
+    asteroid_ys <- -(as.numeric(gsub('\\)', '', gsub('.*,', '', asteroid_loc))) - monitoring_station_locy)
+    
+    distance <- function(x,y) {
+      # Calculate distance from (0,0)
+      sqrt(x^2 + y^2)
+    }
+    asteroid_distance <- mapply(distance, asteroid_xs, asteroid_ys)
+    
+    angle <- function(x,y) {
+      # Calculate angle from (0,0) line
+      theta = atan2(x,y)*(180/(pi))
+      ifelse(theta < 0, 360+theta, theta)
+    }
+    asteroid_angles <- mapply(angle, asteroid_xs, asteroid_ys)
+    
+    frac_info <- 
+      cbind(asteroid_loc,
+            asteroid_xs, 
+            asteroid_ys,
+            asteroid_distance, 
+            asteroid_angles) %>% 
+      as.data.frame(stringsAsFactors = FALSE) %>% 
+      mutate(
+        asteroid_xs = as.numeric(asteroid_xs),
+        asteroid_ys = as.numeric(asteroid_ys),
+        asteroid_distance = as.numeric(asteroid_distance),
+        asteroid_angles = as.numeric(asteroid_angles)
+      ) %>% 
+      filter(
+        !(asteroid_xs == 0 &
+            asteroid_ys == 0)
+      ) %>% 
+      arrange(asteroid_distance) %>% 
+      group_by(asteroid_angles) %>% 
+      mutate(online = row_number()) %>% 
+      ungroup() %>% 
+      arrange(asteroid_angles, online)
+    
+    frac_info_long <- 
+      split(frac_info, frac_info$online) %>% 
+      bind_rows() %>% 
+      mutate(sequence = row_number())
+    
+    as.character(frac_info_long[n, "asteroid_loc"])
+  }
+
+## Test: 
+vaporiseNthAsteroid(day_10_data, 200) # "(8,15)"
 
 
-# Day 12 ---------------------------------------
+# Day 12.1 ---------------------------------------
+
+calcTotalEnergy <- 
+  function(moon_positions,
+           n_steps) {
+    # Summary: Simulate the motion of the moons in time steps. 
+    
+    # Input:
+    #   moon_positions: Position of moons. 
+    #   n_steps: How many simulations to run. 
+    
+    # Output: Energy of system. 
+    
+    # Examples: (download test data)
+    # day_12_test_data <- 
+    #   read.csv(
+    #     "~/Downloads/day_12_test", 
+    #     header = FALSE, 
+    #     stringsAsFactors = FALSE
+    #   ) %>% 
+    #   rename(pos_x = V1,
+    #          pos_y = V2,
+    #          pos_z = V3) %>% 
+    #   mutate_all(
+    #     funs(
+    #       as.numeric( gsub('*.=|<|>', '', .) )
+    #     ) 
+    #   )
+    # calcTotalEnergy(day_12_test_data, 10) # 179
+    require(dplyr)
+    require(magrittr)
+    
+    moon_velocity <- 
+      data.frame(
+        vel_x = rep(0, nrow(moon_positions)),
+        vel_y = rep(0, nrow(moon_positions)),
+        vel_z = rep(0, nrow(moon_positions)),
+        stringsAsFactors = FALSE
+      )
+    
+    moon_pos_vel <- 
+      bind_cols(
+        moon_positions,
+        moon_velocity
+      )
+    
+    as.boolean.int <- function(n1, n2) {
+      if_else(n1 < n2, 1, if_else(n1 > n2, -1, 0))
+    }
+    
+    for(i in 1:n_steps) {
+      
+      for(j in 1:nrow(moon_pos_vel)) {
+        moon_pos_vel[j,"vel_x"] <- sum(moon_pos_vel[j,"vel_x"],  as.boolean.int( moon_pos_vel[j,"pos_x"], moon_pos_vel[["pos_x"]] ) )
+        moon_pos_vel[j,"vel_y"] <- sum(moon_pos_vel[j,"vel_y"],  as.boolean.int( moon_pos_vel[j,"pos_y"], moon_pos_vel[["pos_y"]] ) )
+        moon_pos_vel[j,"vel_z"] <- sum(moon_pos_vel[j,"vel_z"],  as.boolean.int( moon_pos_vel[j,"pos_z"], moon_pos_vel[["pos_z"]] ) )
+      }
+      
+      moon_pos_vel %<>% 
+        rowwise() %>% 
+        mutate(
+          pos_x = pos_x + vel_x,
+          pos_y = pos_y + vel_y,
+          pos_z = pos_z + vel_z,
+          energy = sum( abs(pos_x), abs(pos_y), abs(pos_z) ) * sum( abs(vel_x), abs(vel_y), abs(vel_z) )
+        ) %>% 
+        as.data.frame() 
+      
+    }
+    
+    return(sum(moon_pos_vel$energy))
+  }
+
+## Test: 
+day_12_data <- 
+  read.csv(
+    "~/anala_lytics/AdventOfCode2019/advent_inputs_2019/day_12", 
+    header = FALSE, 
+    stringsAsFactors = FALSE
+  ) %>% 
+  rename(pos_x = V1,
+         pos_y = V2,
+         pos_z = V3) %>% 
+  mutate_all(
+    funs(
+      as.numeric( gsub('*.=|<|>', '', .) )
+    ) 
+  )
+
+calcTotalEnergy(day_12_data, 1000) # 7077
 
 
-# Day 13 ---------------------------------------
+# Day 12.2 ---------------------------------------
 
+matchesPriorLoc <- 
+  function(moon_positions) {
+    # Summary: Find time when moon locations
+    # match a prior location. 
+    
+    # Input:
+    #   moon_positions: Position of moons 
+    
+    # Output: Prior location. 
+    
+    # Examples: (download test data)
+    # day_12_test_data <-
+    #   read.csv(
+    #     "~/Downloads/day_12_test",
+    #     header = FALSE,
+    #     stringsAsFactors = FALSE
+    #   ) %>%
+    #   rename(pos_x = V1,
+    #          pos_y = V2,
+    #          pos_z = V3) %>%
+    #   mutate_all(
+    #     funs(
+    #       as.numeric( gsub('*.=|<|>', '', .) )
+    #     )
+    #   )
+    # matchesPriorLoc(day_12_test_data) # 2772
+    require(dplyr)
+    
+    moon_velocity <- 
+      data.frame(
+        vel_x = rep(0, nrow(moon_positions)),
+        vel_y = rep(0, nrow(moon_positions)),
+        vel_z = rep(0, nrow(moon_positions)),
+        stringsAsFactors = FALSE
+      )
+    
+    moon_pos_vel <- 
+      bind_cols(
+        moon_positions,
+        moon_velocity
+      )
+    
+    as.boolean.int <- function(n1, n2) {
+      if_else(n1 < n2, 1, if_else(n1 > n2, -1, 0))
+    }
+    
+    counter                  <- 0
+    moon_pos_vel_og          <- list()
+    moon_pos_vel_og[[as.character(counter)]] <- moon_pos_vel %>% select(contains("pos"))
+    
+    while(TRUE) {
+      
+      counter <- counter + 1
+      
+      for(j in 1:nrow(moon_pos_vel)) {
+        moon_pos_vel[j,"vel_x"] <- sum(moon_pos_vel[j,"vel_x"],  as.boolean.int( moon_pos_vel[j,"pos_x"], moon_pos_vel[["pos_x"]] ) )
+        moon_pos_vel[j,"vel_y"] <- sum(moon_pos_vel[j,"vel_y"],  as.boolean.int( moon_pos_vel[j,"pos_y"], moon_pos_vel[["pos_y"]] ) )
+        moon_pos_vel[j,"vel_z"] <- sum(moon_pos_vel[j,"vel_z"],  as.boolean.int( moon_pos_vel[j,"pos_z"], moon_pos_vel[["pos_z"]] ) )
+      }
+      
+      moon_pos_vel %<>% 
+        rowwise() %>% 
+        mutate(
+          pos_x = pos_x + vel_x,
+          pos_y = pos_y + vel_y,
+          pos_z = pos_z + vel_z
+        ) %>% 
+        as.data.frame() 
+      
+      moon_pos_vel_og[[as.character(counter)]] <- moon_pos_vel
+      
+      if(length(moon_pos_vel_og) != length(unique(moon_pos_vel_og))) {
+        return(counter - 1)
+      }
+    }
+  }
+
+## Test: 
+matchesPriorLoc(day_12_data) # INEFFICIENT 
+
+# (\(\
+# (-.-)
+# o_('')('')
 
 # Day 14 ---------------------------------------
 
@@ -1231,15 +1619,15 @@ intcodeBoost(day_9_data, 1) # ERROR
 # [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
 # 
 # attached base packages:
-# [1] stats     graphics  grDevices utils     datasets 
-# [6] methods   base     
+# [1] stats     graphics  grDevices utils     datasets  methods  
+# [7] base     
 # 
 # other attached packages:
-# [1] purrr_0.2.3   dplyr_0.8.0.1 gtools_3.8.1 
+# [1] magrittr_1.5  MASS_7.3-50   dplyr_0.8.0.1
 # 
 # loaded via a namespace (and not attached):
-#  [1] tidyselect_0.2.5 compiler_3.4.1   magrittr_1.5    
-#  [4] assertthat_0.2.0 R6_2.4.0         tools_3.4.1     
-#  [7] pillar_1.3.1     glue_1.3.1       rstudioapi_0.9.0
-# [10] tibble_2.0.1     crayon_1.3.4     Rcpp_1.0.0      
-# [13] pkgconfig_2.0.2  rlang_0.3.1 
+#  [1] tidyselect_0.2.5 compiler_3.4.1   assertthat_0.2.0
+#  [4] R6_2.4.0         tools_3.4.1      pillar_1.3.1    
+#  [7] glue_1.3.1       rstudioapi_0.9.0 tibble_2.0.1    
+# [10] crayon_1.3.4     Rcpp_1.0.0       pkgconfig_2.0.2 
+# [13] rlang_0.3.1      purrr_0.2.3 
