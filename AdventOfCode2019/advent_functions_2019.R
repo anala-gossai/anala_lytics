@@ -1336,7 +1336,6 @@ vaporiseNthAsteroid <-
     monitoring_station      <- identifyAsteroids(map)
     monitoring_station_locx <- as.numeric(gsub('\\(', '', gsub(',.*', '', monitoring_station[["asteroid_location"]] )))
     monitoring_station_locy <- as.numeric(gsub('\\)', '', gsub('.*,', '', monitoring_station[["asteroid_location"]] )))
-    revolution              <- as.numeric(monitoring_station[["asteroids_in_sight_line"]])
     
     asteroid_loc <- c()
     for(i in 1:nrow(map)) {
@@ -1581,40 +1580,22 @@ matchesPriorLoc(day_12_data) # INEFFICIENT
 
 # Day 13 ---------------------------------------
 
-# 「(°ヘ°)
-
-# Day 14 ---------------------------------------
-
-
-# Day 15 ---------------------------------------
-
-
-# Day 16 ---------------------------------------
-
-
-# Day 17 ---------------------------------------
-
-
-# Day 18 ---------------------------------------
-
-
-# Day 19 ---------------------------------------
-
-
-# Day 20 ---------------------------------------
-
-
-# Day 21 ---------------------------------------
-
-
-# Day 22 ---------------------------------------
-
-
-# Day 23 ---------------------------------------
-
-
-# Day 24 ---------------------------------------
-
+# Better commitment next year...
+#               /
+#
+#      _/_  \_   __
+#       \\_ /    \_/
+#      ,<  ==-o  _|  *
+#        \ __,  /_)
+#         \_\__//
+#  *     /  ^\-'
+#       //\   \
+#       \\ \  ')
+#       /_) ),-.
+#          //  \\
+#         ((    ))  *
+#         _\\  //_
+#    . ..((__)(__))..
 
 # Day 25 ---------------------------------------
 
