@@ -149,6 +149,54 @@ numValidPw(data_day_2, version = 'old') # 538
 numValidPw(data_day_2, version = 'toboggan') # 489
 
 
+## Day 4 --------------------------
+
+### test test test ................ 
+
+# Note the following input was lightly formatted in sublime 
+# test prior to reading into work. Namely, added ; for line
+# breaks and adding spaces for enters. 
+data_day_4_test_valid <- 
+  read.csv(
+    "~/anala_lytics/AdventOfCode2020/advent_inputs_2020/data_day_4_test", 
+    header=F, 
+    sep=";", 
+    stringsAsFactors=F
+  ) %>% 
+  t() %>% 
+  as.data.frame(stringsAsFactors = F)  %>% 
+  mutate(
+    count_valid_elements = str_count(V1, ':'),
+    adj_count_valid_elements = ifelse(
+      grepl('cid', V1), 
+      count_valid_elements - 1,
+      count_valid_elements
+    ),
+    is_valid = adj_count_valid_elements == 7
+  ) %>% 
+  summarise(num_valid = sum(is_valid)) # 2
+
+data_day_4_valid <- 
+  read.csv(
+    "~/anala_lytics/AdventOfCode2020/advent_inputs_2020/data_day_4", 
+    header=F, 
+    sep=";", 
+    stringsAsFactors=F
+  ) %>% 
+  t() %>% 
+  as.data.frame(stringsAsFactors = F) %>% 
+  mutate(
+    count_valid_elements = str_count(V1, ':'),
+    adj_count_valid_elements = ifelse(
+      grepl('cid', V1), 
+      count_valid_elements - 1,
+      count_valid_elements
+    ),
+    is_valid = adj_count_valid_elements == 7
+  ) %>% 
+  summarise(num_valid = sum(is_valid)) # 200
+
+
 # Session Info ==================== 
 
 # R version 3.4.1 (2017-06-30)
